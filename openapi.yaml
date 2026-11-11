@@ -1,0 +1,301 @@
+openapi: 3.1.0
+
+info:
+  title: API de Productos y Pedidos
+  version: 1.0.0
+  description: API CRUD modular para administrar productos y pedidos académicos.
+
+servers:
+  - url: http://localhost:3000/api/v1
+
+components:
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, details]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items: {}
+    Meta:
+      type: object
+      required: [page, limit, total, totalPages]
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+    Producto:
+      type: object
+      required: [id, nombre, precio, stock, categoria, fechaCreacion]
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        precio:
+          type: number
+        stock:
+          type: integer
+        categoria:
+          type: string
+          enum: [alimentos, bebidas, limpieza, otros]
+        fechaCreacion:
+          type: string
+    CrearProducto:
+      type: object
+      required: [nombre, precio, stock, categoria]
+      properties:
+        nombre:
+          type: string
+          minLength: 3
+        precio:
+          type: number
+          minimum: 0
+        stock:
+          type: integer
+          minimum: 0
+        categoria:
+          type: string
+          enum: [alimentos, bebidas, limpieza, otros]
+    Pedido:
+      type: object
+      required: [id, productoId, cantidad, cliente, estado, fechaCreacion]
+      properties:
+        id:
+          type: integer
+        productoId:
+          type: integer
+        cantidad:
+          type: integer
+        cliente:
+          type: string
+        estado:
+          type: string
+          enum: [pendiente, confirmado, cancelado]
+        fechaCreacion:
+          type: string
+    CrearPedido:
+      type: object
+      required: [productoId, cantidad, cliente]
+      properties:
+        productoId:
+          type: integer
+        cantidad:
+          type: integer
+          minimum: 1
+        cliente:
+          type: string
+          minLength: 3
+
+paths:
+  /productos:
+    get:
+      summary: Listar productos
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: categoria
+          schema:
+            type: string
+            enum: [alimentos, bebidas, limpieza, otros]
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [id, nombre, precio, stock, categoria]
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        "200":
+          description: Listado paginado
+    post:
+      summary: Crear un producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrearProducto"
+      responses:
+        "201":
+          description: Producto creado
+        "400":
+          description: Cuerpo inválido
+        "422":
+          description: Datos inválidos
+
+  /productos/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Obtener un producto por id
+      responses:
+        "200":
+          description: Producto encontrado
+        "400":
+          description: Identificador inválido
+        "404":
+          description: Producto inexistente
+    put:
+      summary: Reemplazar un producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrearProducto"
+      responses:
+        "200":
+          description: Producto reemplazado
+        "404":
+          description: Producto inexistente
+        "422":
+          description: Datos inválidos
+    patch:
+      summary: Modificar parcialmente un producto
+      responses:
+        "200":
+          description: Producto actualizado
+        "404":
+          description: Producto inexistente
+        "422":
+          description: Datos inválidos
+    delete:
+      summary: Eliminar un producto
+      responses:
+        "204":
+          description: Producto eliminado
+        "404":
+          description: Producto inexistente
+        "409":
+          description: Producto con pedidos asociados
+
+  /pedidos:
+    get:
+      summary: Listar pedidos
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: estado
+          schema:
+            type: string
+            enum: [pendiente, confirmado, cancelado]
+        - in: query
+          name: productoId
+          schema:
+            type: integer
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [id, cantidad, cliente, estado, producto_id]
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        "200":
+          description: Listado paginado
+    post:
+      summary: Crear un pedido
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrearPedido"
+      responses:
+        "201":
+          description: Pedido creado
+        "404":
+          description: Producto inexistente
+        "422":
+          description: Datos inválidos o stock insuficiente
+
+  /pedidos/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Obtener un pedido por id
+      responses:
+        "200":
+          description: Pedido encontrado
+        "400":
+          description: Identificador inválido
+        "404":
+          description: Pedido inexistente
+    put:
+      summary: Reemplazar un pedido
+      responses:
+        "200":
+          description: Pedido reemplazado
+        "404":
+          description: Pedido inexistente
+        "422":
+          description: Datos inválidos
+    patch:
+      summary: Modificar parcialmente un pedido
+      responses:
+        "200":
+          description: Pedido actualizado
+        "404":
+          description: Pedido inexistente
+        "422":
+          description: Datos inválidos
+    delete:
+      summary: Eliminar un pedido
+      responses:
+        "204":
+          description: Pedido eliminado
+        "404":
+          description: Pedido inexistente

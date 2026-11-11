@@ -1,7 +1,29 @@
 {
+  "name": "actividad-pb-unidad-2",
+  "version": "1.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "test": "node --test"
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "test": "node --import tsx --test tests",
+    "test:gherkin": "node --import tsx ./node_modules/@cucumber/cucumber/bin/cucumber.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "express": "^4.21.2",
+    "swagger-ui-express": "^5.0.1",
+    "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.3.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^4.17.23",
+    "@types/node": "^22.15.3",
+    "@types/supertest": "^6.0.3",
+    "@types/swagger-ui-express": "^4.1.8",
+    "supertest": "^7.1.1",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
   }
 }
