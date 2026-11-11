@@ -99,46 +99,49 @@ components:
         cliente:
           type: string
           minLength: 3
+    Checkout:
+      type: object
+      required: [usuarioId, productosComprados]
+      properties:
+        usuarioId:
+          type: integer
+          minimum: 1
+        productosComprados:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [productoId, cantidad]
+            properties:
+              productoId:
+                type: integer
+                minimum: 1
+              cantidad:
+                type: integer
+                minimum: 1
+    CrearUsuario:
+      type: object
+      required: [nombre, email]
+      properties:
+        nombre:
+          type: string
+          minLength: 3
+        email:
+          type: string
+          format: email
 
 paths:
   /productos:
     get:
-      summary: Listar productos
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            default: 10
-            maximum: 100
-        - in: query
-          name: q
-          schema:
-            type: string
-        - in: query
-          name: categoria
-          schema:
-            type: string
-            enum: [alimentos, bebidas, limpieza, otros]
-        - in: query
-          name: sort
-          schema:
-            type: string
-            enum: [id, nombre, precio, stock, categoria]
-        - in: query
-          name: order
-          schema:
-            type: string
-            enum: [asc, desc]
+      servers:
+        - url: http://localhost:3000/api
+      summary: Listar productos de PostgreSQL
       responses:
         "200":
-          description: Listado paginado
+          description: Productos disponibles
     post:
+      servers:
+        - url: http://localhost:3000/api
       summary: Crear un producto
       requestBody:
         required: true
@@ -150,9 +153,25 @@ paths:
         "201":
           description: Producto creado
         "400":
-          description: Cuerpo inválido
-        "422":
           description: Datos inválidos
+  /usuarios:
+    post:
+      servers:
+        - url: http://localhost:3000/api
+      summary: Crear un usuario de PostgreSQL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrearUsuario"
+      responses:
+        "201":
+          description: Usuario creado
+        "400":
+          description: Datos inválidos
+        "409":
+          description: El email ya está registrado
 
   /productos/{id}:
     parameters:
@@ -243,20 +262,24 @@ paths:
         "200":
           description: Listado paginado
     post:
-      summary: Crear un pedido
+      servers:
+        - url: http://localhost:3000/api
+      summary: Procesar checkout de un pedido
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CrearPedido"
+              $ref: "#/components/schemas/Checkout"
       responses:
         "201":
-          description: Pedido creado
-        "404":
-          description: Producto inexistente
-        "422":
-          description: Datos inválidos o stock insuficiente
+          description: Pedido creado y stock actualizado
+        "400":
+          description: Datos inválidos, usuario inexistente o stock insuficiente; no se modifica el pedido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /pedidos/{id}:
     parameters:

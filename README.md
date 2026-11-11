@@ -24,7 +24,39 @@ Para desarrollo con recarga:
 npm run dev
 ```
 
-La persistencia queda en `data/app.db` (SQLite). Las pruebas usan una base en memoria.
+Las rutas CRUD versionadas conservan su persistencia SQLite en `data/app.db`. El checkout nuevo usa Prisma y PostgreSQL.
+
+## PostgreSQL y Prisma
+
+1. Copia `.env.example` a `.env` y ajusta `DATABASE_URL` a tu servidor PostgreSQL.
+2. Instala dependencias y genera el cliente Prisma:
+
+   ```bash
+   npm install
+   npm run prisma:generate
+   ```
+
+3. Aplica la migración inicial:
+
+   ```bash
+   npm run prisma:migrate -- --name init
+   ```
+
+El esquema define `Usuario`, `Producto`, `Pedido` y `DetallePedido`. Crea los datos del checkout mediante `POST /api/usuarios` y `POST /api/productos` (también disponible `GET /api/productos`); las rutas versionadas `/api/v1` se mantienen con su persistencia SQLite para compatibilidad.
+
+`POST /api/pedidos` recibe `usuarioId` y `productosComprados` (arreglo de `{ productoId, cantidad }`). Las actualizaciones de stock, los detalles y el total del pedido se procesan en una única transacción; si falta stock, la transacción se revierte. Swagger UI está disponible en http://localhost:3000/api/docs.
+
+Ejemplo:
+
+```json
+{
+  "usuarioId": 1,
+  "productosComprados": [
+    { "productoId": 2, "cantidad": 3 },
+    { "productoId": 4, "cantidad": 1 }
+  ]
+}
+```
 
 ## Contrato
 
@@ -70,8 +102,9 @@ src/
 ├── errors/app-error.ts
 ├── middlewares/
 ├── db/sqlite.ts
+├── db/prisma.ts
 ├── productos/
-└── pedidos/
+└── pedidos/ (CRUD existente y checkout transaccional Prisma)
 ```
 
 La inyección de dependencias se hace por constructores en `crearApp`.

@@ -6,11 +6,15 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
-    "test": "node --import tsx --test tests",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "test": "node --import tsx --test tests/api.http.test.ts tests/info.test.js tests/pedidos.service.test.ts tests/productos.service.test.ts tests/checkout.test.ts",
     "test:gherkin": "node --import tsx ./node_modules/@cucumber/cucumber/bin/cucumber.js"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "better-sqlite3": "^11.10.0",
+    "dotenv": "^18.0.10",
     "express": "^4.21.2",
     "swagger-ui-express": "^5.0.1",
     "yaml": "^2.8.0"
@@ -22,6 +26,7 @@
     "@types/node": "^22.15.3",
     "@types/supertest": "^6.0.3",
     "@types/swagger-ui-express": "^4.1.8",
+    "prisma": "^6.19.3",
     "supertest": "^7.1.1",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"

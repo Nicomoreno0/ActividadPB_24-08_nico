@@ -15,22 +15,36 @@ import { ProductosController } from "./productos/productos.controller.js";
 import { ProductosRepository } from "./productos/productos.repository.js";
 import { crearProductosRouter } from "./productos/productos.routes.js";
 import { ProductosService } from "./productos/productos.service.js";
+import { prisma as clientePrisma } from "./db/prisma.js";
+import { CheckoutController } from "./pedidos/checkout.controller.js";
+import { crearCheckoutRouter } from "./pedidos/checkout.routes.js";
+import { CheckoutService } from "./pedidos/checkout.service.js";
+import { PrismaPedidosRepository } from "./pedidos/prisma-pedidos.repository.js";
+import type { PrismaClient } from "@prisma/client";
+import { CatalogoController } from "./productos/catalogo.controller.js";
+import { crearCatalogoRouter } from "./productos/catalogo.routes.js";
+import { PrismaCatalogoRepository } from "./productos/prisma-catalogo.repository.js";
 
 const directorioActual = dirname(fileURLToPath(import.meta.url));
 
 export interface OpcionesApp {
   db?: SqliteDatabase;
   dbPath?: string;
+  prisma?: PrismaClient;
 }
 
 export function crearApp(opciones: OpcionesApp = {}) {
   const db = opciones.db ?? crearBaseDeDatos(opciones.dbPath ?? "data/app.db");
+  const prisma = opciones.prisma ?? clientePrisma;
   const productosRepository = new ProductosRepository(db);
   const pedidosRepository = new PedidosRepository(db);
   const productosService = new ProductosService(productosRepository, pedidosRepository);
   const pedidosService = new PedidosService(pedidosRepository, productosRepository);
   const productosController = new ProductosController(productosService);
   const pedidosController = new PedidosController(pedidosService);
+  const checkoutRepository = new PrismaPedidosRepository(prisma);
+  const checkoutController = new CheckoutController(new CheckoutService(checkoutRepository));
+  const catalogoController = new CatalogoController(new PrismaCatalogoRepository(prisma));
 
   const app = express();
   app.use(express.json());
@@ -54,6 +68,8 @@ export function crearApp(opciones: OpcionesApp = {}) {
 
   app.use("/api/v1/productos", crearProductosRouter(productosController));
   app.use("/api/v1/pedidos", crearPedidosRouter(pedidosController));
+  app.use("/api", crearCatalogoRouter(catalogoController));
+  app.use("/api", crearCheckoutRouter(checkoutController));
   app.use(notFound);
   app.use(errorHandler);
 
